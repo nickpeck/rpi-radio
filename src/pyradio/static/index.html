@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <link rel="stylesheet" href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/stylesheet.css" />
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+</head>
+
+<body>
+    <div data-role="page">
+        <div id="header" data-role="header" data-position="fixed">
+            <a id="toggle" href="#" data-icon="delete" class="ui-btn-right">Stop</a>
+            <h1 id="status">Internet Radio</h1>
+        </div>
+
+        <div role="main" class="ui-content">
+            <div id="stations">
+                <a class="ui-btn-icon-left ui-icon-plus" data-icon="plus" href="#popupAddStation" data-role="button"
+                    data-rel="popup">Add
+                    Station</a>
+                <div data-role="popup" id="popupAddStation">
+                    <p id="errors"></p>
+                    <div class="ui-field-contain">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" />
+                    </div>
+                    <div class="ui-field-contain">
+                        <label for="url">Url</label>
+                        <input type="text" id="url" name="url" />
+                    </div>
+                    <a data-role="button" class="ui-btn ui-shadow ui-btn-inline ui-corner-all"
+                        onclick="$('#popupAddStation').popup('close')">Cancel</a>
+                    <a data-role="button"
+                        class="ui-shadow ui-btn-inline ui-btn ui-corner-all ui-btn-icon-left ui-icon-plus ui-btn-b"
+                        onclick='addStation()'>Add</a>
+                </div>
+
+                <h3>My Stations:</h3>
+                <div id="otherStations"></div>
+
+                <div data-role="popup" id="feedback"></div>
+                <div data-role="popup" data-dismissible="false" id="popupServerError">
+                    <p>Unable to reach the device. Please restart your device in order to resume and close this message.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        function setStatus(state, currentStation) {
+            if (state.state == "playing") {
+                $('#status').text("Internet Radio : " + currentStation.name + " (playing)");
+                $('#toggle').text('Stop');
+                $('#toggle').unbind();
+                $('#toggle').buttonMarkup({ icon: "delete" });
+                $('#toggle').trigger('create');
+                $('#toggle').on("click", function (e) {
+                    stop();
+                });
+            }
+            if (state.state == "stopped") {
+                $('#status').text("Internet Radio : " + currentStation.name + " (stopped)");
+                $('#toggle').text('Play');
+                $('#toggle').unbind();
+                $('#toggle').buttonMarkup({ icon: "carat-r" });;
+                $('#toggle').trigger('create');
+                $('#toggle').on("click", function (e) {
+                    playStation(state.current_station);
+                });
+            }
+        }
+
+        function make_station(station) {
+            return "<li> \
+            <span>" + station.name + "</span> \
+            <button class=\"ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-carat-r\" onclick='playStation(\"" + station.uid + "\")'>Play</button> \
+            <button class=\"ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-delete\" onclick='deleteStation(\"" + station.uid + "\")'>Delete</button> \
+        </li>";
+        }
+
+        function addStation() {
+            var newStation = {
+                name: $("#popupAddStation #name").val(),
+                url: $("#popupAddStation #url").val(),
+            };
+            var ajax = $.ajax({
+                url: "/api/station/create/",
+                type: "POST",
+                data: JSON.stringify(newStation),
+                contentType: 'application/json; charset=utf-8',
+                dataType: "json",
+                success: function (data, textStatus, jqXHR) {
+                    $("#popupAddStation").popup("close");
+                    $("#name").val('');
+                    $("#url").val('');
+                    $('#errors').val('');
+                    reloadState();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $('#errors').text("An error occured adding the station: " + jqXHR.responseJSON.error);
+                }
+            });
+        }
+
+        function deleteStation(uid) {
+            var ajax = $.ajax({
+                url: "/api/station/delete/",
+                type: "POST",
+                data: JSON.stringify({ uid: uid }),
+                contentType: 'application/json; charset=utf-8',
+                dataType: "json",
+                success: function (data, textStatus, jqXHR) {
+                    reloadState();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $('#feedback').text("An error occured deleting the station: " + jqXHR.responseJSON.error).popup("open");;
+                }
+            });
+        }
+
+        function playStation(uid) {
+            update_player_status({
+                current_station: uid,
+                state: "playing"
+            });
+        }
+
+        function stop() {
+            update_player_status({
+                state: "stopped"
+            });
+        }
+
+        function update_player_status(status) {
+            var ajax = $.ajax({
+                url: "/api/player/update/",
+                type: "POST",
+                data: JSON.stringify(status),
+                contentType: 'application/json; charset=utf-8',
+                dataType: "json",
+                success: function (data, textStatus, jqXHR) {
+                    reloadState();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $('#feedback').text("An error occured reloading the player status: " + jqXHR.responseJSON.error).popup("open");;
+                }
+            });
+        }
+
+        function makeStations(stations) {
+            stations.sort(function (a, b) {
+                return a.name > b.name;
+            });
+            var items = [];
+            $.each(stations, function (i, station) {
+                items.push(make_station(station));
+            });
+            return "<ul data-role=\"listview\">" + items.join("") + "</ul>";
+        }
+
+        function reloadState() {
+            $.ajax({
+                url: "/api/player",
+                type: "GET",
+                dataType: "json",
+                success: function (status, textStatus, jqXHR) {
+                    $.ajax({
+                        url: "/api/station",
+                        type: "GET",
+                        dataType: "json",
+                        success: function (stations, textStatus, jqXHR) {
+                            var currentStation = stations.filter(
+                                function (station) { return station.uid == status.current_station });
+
+                            $("#otherStations").html(makeStations(stations)).trigger('create');
+                            setStatus(status, currentStation[0]);
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            $('#feedback').text("An error occured reloading the stations list: " + jqXHR.responseJSON.error).popup("open");;
+                        }
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $('#feedback').text("An error occured reloading the player state: " + jqXHR.responseJSON.error).popup("open");;
+                }
+            });
+
+        }
+
+        function checkHealth() {
+            var ajax = $.ajax({
+                url: "/health",
+                type: "GET",
+                success: function (data, textStatus, jqXHR) {
+                    $('#popupServerError').popup("close");
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    $('#popupServerError').popup("open");
+                }
+            });
+        }
+
+        $(window).on("load", function () {
+            reloadState();
+            setInterval(checkHealth, 5000);
+        });
+    </script>
+</body>
+
+</html>

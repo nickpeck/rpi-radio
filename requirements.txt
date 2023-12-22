@@ -1,0 +1,4 @@
+cherrypy==18.8.0
+tinydb
+tinyrecord
+validators
