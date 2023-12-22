@@ -18,6 +18,7 @@ import validators
 from . root import Root
 from . player import Player
 from . station import Station
+from . monitor import Monitor
 
 root_logger = logging.getLogger()
 root_logger.setLevel(logging.DEBUG)
@@ -70,8 +71,15 @@ if not os.path.isfile(DB_PATH):
 else:
     db = TinyDB(DB_PATH)
 
+player_instance = Player(db)
+
 cherrypy.tree.mount(Root(), "/", cp_conf)
-cherrypy.tree.mount(Player(db), "/api/player", cp_conf)
+cherrypy.tree.mount(player_instance, "/api/player", cp_conf)
 cherrypy.tree.mount(Station(db), "/api/station", cp_conf)
+
+monitor = Monitor(player_instance)
+monitor.setDaemon(True)   
+monitor.start()
+
 cherrypy.engine.start()
 cherrypy.engine.block()

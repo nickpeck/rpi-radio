@@ -17,7 +17,7 @@ class Player:
     def __init__(self, db):
         self.db = db
         player = self.db.search(Query().current_station.exists())[0]
-        current_station = self.db.search(Query().uid == player['current_station'])
+        current_station = self.get_current_station()
         if len(current_station) and player['play_on_start']:
             self.play(current_station[0]['url'])
 
@@ -29,6 +29,10 @@ class Player:
         if Player._proc is not None:
             player['state'] = "playing"
         return player
+
+    def get_current_station(self):
+        player = self.db.search(Query().current_station.exists())[0]
+        return self.db.search(Query().uid == player['current_station'])
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
