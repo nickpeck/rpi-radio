@@ -53,7 +53,8 @@ cp_conf = {
         'tools.auth_digest.accept_charset': 'UTF-8',
     }
 }
-DB_PATH = '/usr/src/app/database/db.json';
+
+DB_PATH = os.path.join(os.getcwd(), 'database/db.json')
 
 def do_exit(*args):
     root_logger.info("Shutdown signal recieved, stopping server")

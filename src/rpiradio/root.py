@@ -1,9 +1,15 @@
+import os
+import sys
+
 import cherrypy
+
+current_module = sys.modules[__name__]
+MOD_PATH = os.path.dirname(current_module.__file__)
 
 class Root:
     @cherrypy.expose
     def index(self):
-        return open("/usr/src/app/pyradio/static/index.html")
+        return open(os.path.join(MOD_PATH, "static/index.html"))
 
     @cherrypy.expose
     def health(self):
@@ -14,6 +20,6 @@ class Root:
 
     static._cp_config = {
         "tools.staticdir.on": True,
-        "tools.staticdir.dir": "/usr/src/app/pyradio/static",
+        "tools.staticdir.dir": os.path.join(MOD_PATH, "static"),
         "tools.staticdir.index": "index.html"
     }
