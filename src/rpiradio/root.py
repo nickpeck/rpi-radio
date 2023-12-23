@@ -8,6 +8,9 @@ MOD_PATH = os.path.dirname(current_module.__file__)
 
 class Root:
 
+    def __init__(self, app_config):
+        self.app_config = app_config
+
     @cherrypy.expose
     def index(self):
         return open(os.path.join(MOD_PATH, "static/index.html"))
@@ -25,15 +28,15 @@ class Root:
 
     @cherrypy.expose
     def stdout(self):
-        log_path = "/var/log/radio.out.log"
-        contents = self._get_logfile_contents(log_path)
+        contents = self._get_logfile_contents(
+            self.app_config["server"]["out_log_path"])
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         return contents
 
     @cherrypy.expose
     def stderr(self):
-        log_path = "/var/log/radio.err.log"
-        contents = self._get_logfile_contents(log_path)
+        contents = self._get_logfile_contents(
+            self.app_config["server"]["err_log_path"])
         cherrypy.response.headers['Content-Type'] = 'text/plain'
         return contents
 

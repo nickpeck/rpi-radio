@@ -1,3 +1,14 @@
+# all these are optional, uncomment and override as required (see __main__.py for defaults)
 [server]
 login: secret
-
+# log paths do not setup a log writer - this is only used for specifying a file path to displayed in the UI for debug purposes.
+# Its up to you to set a tool such as supervisor to manage the stderr/stdout logging & log rotation
+out_log_path: /var/log/radio.out.log
+err_log_path: /var/log/radio.err.log
+# host and port for the admin ui (0.0.0.0 = listen on all interfaces).
+socket_host: 0.0.0.0
+socket_port: 8080
+db_path: database/db.json
+play_on_start: true
+# This starts a worker thread to monitor the player process for network outages - if it has exited with an exit code and we are still in the 'playing' state, attempt to restart
+restart_monitor_on: true

@@ -14,11 +14,12 @@ import validators
 class Player:
     _proc = None
 
-    def __init__(self, db):
+    def __init__(self, db, app_config):
         self.db = db
+        self.app_config = app_config
         player = self.db.search(Query().current_station.exists())[0]
         current_station = self.get_current_station()
-        if len(current_station) and player['play_on_start']:
+        if len(current_station) and app_config.getboolean("server", 'play_on_start'):
             self.play(current_station[0]['url'])
 
     @cherrypy.expose
