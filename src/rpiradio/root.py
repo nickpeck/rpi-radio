@@ -16,10 +16,7 @@ class Root:
     def health(self):
         pass
 
-    @cherrypy.expose
-    def stdout(self):
-        cherrypy.response.headers['Content-Type'] = 'text/plain'
-        log_path = "/var/log/radio.out.log"
+    def _get_logfile_contents(self, log_path):
         if not os.path.isfile(log_path):
             return "log file does not exist at {}".format(log_path)
         with open(log_path, "r") as f:
@@ -27,14 +24,18 @@ class Root:
             return contents
 
     @cherrypy.expose
-    def stderr(self):
+    def stdout(self):
+        log_path = "/var/log/radio.out.log"
+        contents = self._get_logfile_contents(log_path)
         cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return contents
+
+    @cherrypy.expose
+    def stderr(self):
         log_path = "/var/log/radio.err.log"
-        if not os.path.isfile(log_path):
-            return "log file does not exist at {}".format(log_path)
-        with open(log_path, "r") as f:
-            contents = f.readlines()
-            return contents
+        contents = self._get_logfile_contents(log_path)
+        cherrypy.response.headers['Content-Type'] = 'text/plain'
+        return contents
 
     def static(self):
         pass
