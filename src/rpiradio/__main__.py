@@ -30,11 +30,11 @@ formatter = logging.Formatter(
 handler.setFormatter(formatter)
 root_logger.addHandler(handler)
 
-_config = {
+'''_config = {
     "server": {
         "login": "secret"
     }
-}
+}'''
 
 config = configparser.ConfigParser()
 config.read('rpi-radio.ini')
@@ -42,7 +42,7 @@ config.read('rpi-radio.ini')
 try:
     login = config.sections()['server']['login']
 except (TypeError, KeyError):
-    login = _config['server']['login']
+    login = config['server']['login']
 
 cherrypy.server.socket_host = "0.0.0.0"
 cherrypy.server.socket_port = 8080
