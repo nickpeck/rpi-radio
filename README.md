@@ -26,5 +26,5 @@ export PYTHONPATH=${PYTHONPATH}:src
 python3 -m rpiradio
 ```
 
-visit http://<your hostname>:8080 to use the gui. User is 'admin' and the 
+visit http://{your hostname}:8080 to use the gui. User is 'admin' and the 
 login password as defined in rpi-radio.ini
