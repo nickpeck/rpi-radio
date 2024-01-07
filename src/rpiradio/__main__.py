@@ -77,10 +77,14 @@ else:
     db = TinyDB(db_path)
 
 player_instance = Player(db, app_config)
-
-cherrypy.tree.mount(Root(app_config), "/", cp_conf)
-cherrypy.tree.mount(player_instance, "/api/player", cp_conf)
-cherrypy.tree.mount(Station(db), "/api/station", cp_conf)
+root_instance = Root(app_config)
+station_instance = Station(db)
+cherrypy.tree.mount(root_instance, "/")
+cherrypy.tree.mount(player_instance, "/api/player")
+cherrypy.tree.mount(station_instance, "/api/station")
+cherrypy.tree.mount(root_instance, "/admin/", cp_conf)
+cherrypy.tree.mount(player_instance, "/admin/api/player", cp_conf)
+cherrypy.tree.mount(station_instance, "/admin/api/station", cp_conf)
 
 if app_config.getboolean("server", "restart_monitor_on"):
     monitor = Monitor(player_instance)
