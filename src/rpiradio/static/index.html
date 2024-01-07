@@ -52,8 +52,8 @@
         </div>
 
         <div data-role="footer"  data-position="fixed">
-            <a class="adminctl dis" href="/stderr" target="_blank">Error Log</a>
-            <a class="adminctl hide" href="/stdout" target="_blank">Output Log</a>
+            <a class="adminctl" href="/stderr" target="_blank">Error Log</a>
+            <a class="adminctl" href="/stdout" target="_blank">Output Log</a>
             <div>
                 <a href="https://github.com/nickpeck/rpi-radio" target="_blank">https://github.com/nickpeck/rpi-radio</a>
             </div>
@@ -193,9 +193,10 @@
                         success: function (stations, textStatus, jqXHR) {
                             var currentStation = stations.filter(
                                 function (station) { return station.uid == status.current_station });
-
+   
                             var is_admin = status.login == "admin";
                             if(is_admin){
+                                console.log("Administrator log in");
                                 $(".adminctl").show();
                             }
                             $("#otherStations").html(makeStations(stations, is_admin)).trigger('create');
@@ -225,10 +226,9 @@
                 }
             });
         }
-
-        $(document).on('pageshow', function () {
+ 
+        $(window).on('load', function () {               
             $(".adminctl").hide();
-            $(".ui-icon-delete").hide();
             reloadState();
             setInterval(checkHealth, 5000);
         });
