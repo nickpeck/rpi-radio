@@ -20,7 +20,7 @@
 
         <div role="main" class="ui-content">
             <div id="stations">
-                <a class="ui-btn-icon-left ui-icon-plus" data-icon="plus" href="#popupAddStation" data-role="button"
+                <a class="adminctl ui-btn-icon-left ui-icon-plus" data-icon="plus" href="#popupAddStation" data-role="button"
                     data-rel="popup">Add
                     Station</a>
                 <div data-role="popup" id="popupAddStation">
@@ -52,8 +52,8 @@
         </div>
 
         <div data-role="footer"  data-position="fixed">
-            <a href="/stderr" target="_blank">Error Log</a>
-            <a href="/stdout" target="_blank">Output Log</a>
+            <a class="adminctl" href="/stderr" target="_blank">Error Log</a>
+            <a class="adminctl" href="/stdout" target="_blank">Output Log</a>
             <div>
                 <a href="https://github.com/nickpeck/rpi-radio" target="_blank">https://github.com/nickpeck/rpi-radio</a>
             </div>
@@ -86,12 +86,16 @@
             }
         }
 
-        function make_station(station) {
-            return "<li> \
+        function make_station(station, is_admin) {
+            var html = "<li> \
             <span>" + station.name + "</span> \
-            <button class=\"ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-carat-r\" onclick='playStation(\"" + station.uid + "\")'>Play</button> \
-            <button class=\"ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-delete\" onclick='deleteStation(\"" + station.uid + "\")'>Delete</button> \
-        </li>";
+            <button class=\"ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-carat-r\" onclick='playStation(\"" + station.uid + "\")'>Play</button>";
+
+            if (is_admin){
+                html = html + "<button class=\"adminctl ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-delete\" onclick='deleteStation(\"" + station.uid + "\")'>Delete</button>"
+            }
+
+            return html + "</li>";
         }
 
         function addStation() {
@@ -100,7 +104,7 @@
                 url: $("#popupAddStation #url").val(),
             };
             var ajax = $.ajax({
-                url: "/api/station/create/",
+                url: "./api/station/create/",
                 type: "POST",
                 data: JSON.stringify(newStation),
                 contentType: 'application/json; charset=utf-8',
@@ -120,7 +124,7 @@
 
         function deleteStation(uid) {
             var ajax = $.ajax({
-                url: "/api/station/delete/",
+                url: "./api/station/delete/",
                 type: "POST",
                 data: JSON.stringify({ uid: uid }),
                 contentType: 'application/json; charset=utf-8',
@@ -149,7 +153,7 @@
 
         function update_player_status(status) {
             var ajax = $.ajax({
-                url: "/api/player/update/",
+                url: "./api/player/update/",
                 type: "POST",
                 data: JSON.stringify(status),
                 contentType: 'application/json; charset=utf-8',
@@ -163,7 +167,7 @@
             });
         }
 
-        function makeStations(stations) {
+        function makeStations(stations, is_admin) {
             stations.sort(function (a, b) {
                 if(a.name.toLowerCase() < b.name.toLowerCase()) { return -1; }
                 if(a.name.toLowerCase() > b.name.toLowerCase()) { return 1; }
@@ -171,26 +175,31 @@
             });
             var items = [];
             $.each(stations, function (i, station) {
-                items.push(make_station(station));
+                items.push(make_station(station, is_admin));
             });
             return "<ul data-role=\"listview\">" + items.join("") + "</ul>";
         }
 
         function reloadState() {
             $.ajax({
-                url: "/api/player",
+                url: "./api/player",
                 type: "GET",
                 dataType: "json",
                 success: function (status, textStatus, jqXHR) {
                     $.ajax({
-                        url: "/api/station",
+                        url: "./api/station",
                         type: "GET",
                         dataType: "json",
                         success: function (stations, textStatus, jqXHR) {
                             var currentStation = stations.filter(
                                 function (station) { return station.uid == status.current_station });
-
-                            $("#otherStations").html(makeStations(stations)).trigger('create');
+   
+                            var is_admin = status.login == "admin";
+                            if(is_admin){
+                                console.log("Administrator log in");
+                                $(".adminctl").show();
+                            }
+                            $("#otherStations").html(makeStations(stations, is_admin)).trigger('create');
                             setStatus(status, currentStation[0]);
                         },
                         error: function (jqXHR, textStatus, errorThrown) {
@@ -217,8 +226,9 @@
                 }
             });
         }
-
-        $(window).on("load", function () {
+ 
+        $(window).on('load', function () {               
+            $(".adminctl").hide();
             reloadState();
             setInterval(checkHealth, 5000);
         });

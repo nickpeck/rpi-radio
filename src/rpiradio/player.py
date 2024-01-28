@@ -29,6 +29,7 @@ class Player:
         player['state'] = 'stopped'
         if Player._proc is not None:
             player['state'] = "playing"
+        player["login"] = cherrypy.request.login
         return player
 
     def get_current_station(self):
