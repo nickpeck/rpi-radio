@@ -95,6 +95,10 @@
                 html = html + "<button class=\"adminctl ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-delete\" onclick='deleteStation(\"" + station.uid + "\")'>Delete</button>"
             }
 
+            if (is_admin) {
+                html = html + "<span class=\"ui-btn-right\">" + station.url + "</span>"
+            }
+
             return html + "</li>";
         }
 
